@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "694870488169",
-    "project_id": "vault-af031",
-    "storage_bucket": "vault-af031.firebasestorage.app"
+    "project_number": "399378835895",
+    "project_id": "vault-5c120",
+    "storage_bucket": "vault-5c120.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:694870488169:android:86ecfe774206be9dcb5ef8",
+        "mobilesdk_app_id": "1:399378835895:android:2c2596a1c2e5ce075fe032",
         "android_client_info": {
           "package_name": "com.anilguzel.vault"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyAUprvv0N2Ehu3lKd69UtLSS7TA90sW7D4"
+          "current_key": "AIzaSyBClo67_YByfPdkOnhbNp_tTiRRCHJckG8"
         }
       ],
       "services": {
