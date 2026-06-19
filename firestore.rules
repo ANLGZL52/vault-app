@@ -1,0 +1,41 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isReferralPuzzleReward(userId) {
+      return isSignedIn()
+        && request.auth.uid != userId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['puzzlePieces'])
+        && request.resource.data.puzzlePieces is number
+        && resource.data.puzzlePieces is number
+        && request.resource.data.puzzlePieces == resource.data.puzzlePieces + 1
+        && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.referredBy == userId;
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) || isReferralPuzzleReward(userId);
+      allow delete: if isOwner(userId);
+
+      match /{document=**} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    match /referralCodes/{code} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if false;
+    }
+  }
+}

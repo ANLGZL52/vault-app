@@ -1,0 +1,3 @@
+Backend AI calls are proxied through Firebase Cloud Functions.
+
+Do not store API keys or bearer tokens in this file.
