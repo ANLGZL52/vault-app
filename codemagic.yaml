@@ -1,0 +1,66 @@
+workflows:
+  ios-release:
+    name: iOS App Store Release
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+
+    integrations:
+      app_store_connect: CodeMagic Vault
+
+    environment:
+      flutter: 3.44.2
+      xcode: latest
+      cocoapods: default
+      groups:
+        - appstore_credentials
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.anilguzel.vault
+      vars:
+        BUNDLE_ID: com.anilguzel.vault
+        XCODE_WORKSPACE: ios/Runner.xcworkspace
+        XCODE_SCHEME: Runner
+        APP_STORE_ID: "6782353694"
+        APPLE_TEAM_ID: 25YU5R23MS
+
+    scripts:
+      - name: Flutter version
+        script: flutter --version
+
+      - name: Install dependencies
+        script: flutter pub get
+
+      - name: Flutter analyze
+        script: flutter analyze
+
+      - name: Build iOS (no codesign)
+        script: |
+          flutter build ios \
+            --release \
+            --no-codesign
+
+      - name: Set up code signing
+        script: xcode-project use-profiles
+
+      - name: Build IPA
+        script: |
+          xcode-project build-ipa \
+            --workspace "$XCODE_WORKSPACE" \
+            --scheme "$XCODE_SCHEME"
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - flutter_drive.log
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        submit_to_app_store: false
+      email:
+        recipients:
+          - anlgzl52@gmail.com
+        notify:
+          success: true
+          failure: true
