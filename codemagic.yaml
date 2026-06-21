@@ -23,14 +23,23 @@ workflows:
 
       - name: Fetch signing files
         script: |
-          # Revoke any existing iOS Distribution certificates that lack a local private key,
-          # then create fresh certificate + App Store provisioning profile via API key.
-          app-store-connect certificates revoke \
-            --type IOS_DISTRIBUTION \
-            || true
+          # Generate a fresh RSA private key for a new Distribution certificate
+          openssl genrsa -out /tmp/dist_key.pem 2048
+
+          # Delete any existing iOS Distribution certificates
+          # (they lack a local private key and would block fresh creation)
+          EXISTING=$(app-store-connect certificates list \
+            --type IOS_DISTRIBUTION 2>/dev/null | awk 'NR>1 {print $1}')
+          for cert_id in $EXISTING; do
+            app-store-connect certificates delete "$cert_id" && \
+              echo "Deleted certificate: $cert_id" || true
+          done
+
+          # Create fresh certificate + App Store provisioning profile
           app-store-connect fetch-signing-files \
             "$BUNDLE_ID" \
             --type IOS_APP_STORE \
+            --certificate-key @file:/tmp/dist_key.pem \
             --create
 
       - name: Add certificates to keychain
