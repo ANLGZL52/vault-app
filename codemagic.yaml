@@ -23,23 +23,21 @@ workflows:
 
       - name: Delete existing Distribution certificates
         script: |
-          # Save list JSON to file to avoid pipe subshell issues
+          # List ALL certs (no --type, IOS_DISTRIBUTION flag returns empty for these certs)
           app-store-connect certificates list \
-            --type IOS_DISTRIBUTION \
             --json > /tmp/certs.json 2>/dev/null \
             || echo "[]" > /tmp/certs.json
-          echo "Raw JSON (first 300 chars): $(head -c 300 /tmp/certs.json)"
-          # Parse IDs – handle both {"data":[...]} and [...] formats
-          python3 -c "import json;d=json.load(open('/tmp/certs.json'));items=d if isinstance(d,list) else d.get('data',[]);[open('/tmp/cert_ids.txt','a').write(i.get('id','')+'\n') for i in items if i.get('id','')]" 2>/dev/null \
+          echo "Raw JSON (first 500 chars): $(head -c 500 /tmp/certs.json)"
+          # Delete certs whose JSON representation contains "DISTRIBUTION"
+          python3 -c "import json;d=json.load(open('/tmp/certs.json'));items=d if isinstance(d,list) else d.get('data',[]);[open('/tmp/cert_ids.txt','a').write(i.get('id','')+'\n') for i in items if i.get('id','') and 'DISTRIBUTION' in str(i).upper()]" 2>/dev/null \
             || touch /tmp/cert_ids.txt
-          echo "Certificate IDs to delete: $(cat /tmp/cert_ids.txt)"
-          # Delete each certificate using file redirection (not pipe)
+          echo "Distribution cert IDs to delete: $(cat /tmp/cert_ids.txt 2>/dev/null)"
           while IFS= read -r cert_id; do
             [ -z "$cert_id" ] && continue
             echo "Deleting: $cert_id"
-            app-store-connect certificates delete "$cert_id" \
+            app-store-connect certificates delete "$cert_id" 2>&1 \
               && echo "Deleted OK" || echo "Delete failed (continuing)"
-          done < /tmp/cert_ids.txt || true
+          done < /tmp/cert_ids.txt 2>/dev/null || true
           echo "Certificate cleanup done."
 
       - name: Fetch signing files
