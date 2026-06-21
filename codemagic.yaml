@@ -10,9 +10,6 @@ workflows:
       cocoapods: default
       groups:
         - appstore_credentials
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.anilguzel.vault
       vars:
         BUNDLE_ID: com.anilguzel.vault
         XCODE_WORKSPACE: ios/Runner.xcworkspace
@@ -21,6 +18,19 @@ workflows:
         APPLE_TEAM_ID: 25YU5R23MS
 
     scripts:
+      - name: Set up keychain
+        script: keychain initialize
+
+      - name: Fetch signing files
+        script: |
+          app-store-connect fetch-signing-files \
+            "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create
+
+      - name: Add certificates to keychain
+        script: keychain add-certificates
+
       - name: Flutter version
         script: flutter --version
 
