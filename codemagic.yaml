@@ -21,20 +21,30 @@ workflows:
       - name: Set up keychain
         script: keychain initialize
 
+      - name: Delete existing Distribution certificates
+        script: |
+          # List existing iOS Distribution certs as JSON and delete each one
+          CERT_JSON=$(app-store-connect certificates list \
+            --type IOS_DISTRIBUTION \
+            --json 2>/dev/null || echo "[]")
+          echo "Existing certs: $CERT_JSON"
+          echo "$CERT_JSON" | python3 -c "
+import sys, json
+certs = json.load(sys.stdin)
+for c in certs:
+    print(c['id'])
+" | while read cert_id; do
+            echo "Deleting certificate: $cert_id"
+            app-store-connect certificates delete "$cert_id" \
+              && echo "Deleted: $cert_id" \
+              || echo "Failed to delete: $cert_id"
+          done
+          echo "Certificate cleanup complete."
+
       - name: Fetch signing files
         script: |
           # Generate a fresh RSA private key for a new Distribution certificate
           openssl genrsa -out /tmp/dist_key.pem 2048
-
-          # Delete any existing iOS Distribution certificates
-          # (they lack a local private key and would block fresh creation)
-          EXISTING=$(app-store-connect certificates list \
-            --type IOS_DISTRIBUTION 2>/dev/null | awk 'NR>1 {print $1}')
-          for cert_id in $EXISTING; do
-            app-store-connect certificates delete "$cert_id" && \
-              echo "Deleted certificate: $cert_id" || true
-          done
-
           # Create fresh certificate + App Store provisioning profile
           app-store-connect fetch-signing-files \
             "$BUNDLE_ID" \
