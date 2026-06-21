@@ -23,6 +23,11 @@ workflows:
 
       - name: Fetch signing files
         script: |
+          # Revoke any existing iOS Distribution certificates that lack a local private key,
+          # then create fresh certificate + App Store provisioning profile via API key.
+          app-store-connect certificates revoke \
+            --type IOS_DISTRIBUTION \
+            || true
           app-store-connect fetch-signing-files \
             "$BUNDLE_ID" \
             --type IOS_APP_STORE \
