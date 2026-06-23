@@ -10,11 +10,15 @@ export 'app.dart' show VaultApp;
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final firebaseAvailable = _isFirebaseAuthSupported;
+  var firebaseAvailable = _isFirebaseAuthSupported;
   if (firebaseAvailable) {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
+    try {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    } catch (_) {
+      firebaseAvailable = false;
+    }
   }
   await RevenueCatService.instance.prepareForStartup();
 
