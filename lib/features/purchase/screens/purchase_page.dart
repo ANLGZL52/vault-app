@@ -20,6 +20,7 @@ class _PurchasePageState extends State<PurchasePage> {
       widget.creditService ?? CreditService();
   late Future<_CreditSummary> _summaryFuture;
   String? _busyPackage;
+  bool _isRestoring = false;
 
   @override
   void initState() {
@@ -31,11 +32,13 @@ class _PurchasePageState extends State<PurchasePage> {
     final results = await Future.wait([
       _creditService.getCredits(),
       _creditService.hasAllVaults(),
+      RevenueCatService.instance.getProductPriceMap(),
     ]);
 
     return _CreditSummary(
       credits: results[0] as int,
       hasAllVaults: results[1] as bool,
+      packagePrices: results[2] as Map<String, String>,
     );
   }
 
@@ -78,6 +81,26 @@ class _PurchasePageState extends State<PurchasePage> {
       ).showSnackBar(SnackBar(content: Text(_friendlyMessage(error))));
     } finally {
       if (mounted) setState(() => _busyPackage = null);
+    }
+  }
+
+  Future<void> _restorePurchases() async {
+    if (_isRestoring) return;
+    setState(() => _isRestoring = true);
+    try {
+      await RevenueCatService.instance.restorePurchases();
+      await _refreshSummary();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Satın alımlar başarıyla geri yüklendi.')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_friendlyMessage(error))),
+      );
+    } finally {
+      if (mounted) setState(() => _isRestoring = false);
     }
   }
 
@@ -131,10 +154,16 @@ class _PurchasePageState extends State<PurchasePage> {
                       ? 'Tüm Kasaları Aç'
                       : 'Satın Al',
                   isBusy: _busyPackage == package.type.name,
+                  price: summary.packagePrices[package.productIdentifier],
                   onPressed: () => purchaseVaultPackage(package),
                 ),
                 const SizedBox(height: 14),
               ],
+              const SizedBox(height: 8),
+              _RestoreButton(
+                isRestoring: _isRestoring,
+                onRestore: _restorePurchases,
+              ),
             ],
           );
         },
@@ -144,10 +173,41 @@ class _PurchasePageState extends State<PurchasePage> {
 }
 
 class _CreditSummary {
-  const _CreditSummary({required this.credits, required this.hasAllVaults});
+  const _CreditSummary({
+    required this.credits,
+    required this.hasAllVaults,
+    this.packagePrices = const {},
+  });
 
   final int credits;
   final bool hasAllVaults;
+  final Map<String, String> packagePrices;
+}
+
+class _RestoreButton extends StatelessWidget {
+  const _RestoreButton({required this.isRestoring, required this.onRestore});
+
+  final bool isRestoring;
+  final VoidCallback onRestore;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: TextButton(
+        onPressed: isRestoring ? null : onRestore,
+        child: isRestoring
+            ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Text(
+                'Satın Alımları Geri Yükle',
+                style: TextStyle(color: Color(0xFFA5A8B3)),
+              ),
+      ),
+    );
+  }
 }
 
 class _PurchaseErrorState extends StatelessWidget {

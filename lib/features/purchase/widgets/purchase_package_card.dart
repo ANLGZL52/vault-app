@@ -7,6 +7,7 @@ class PurchasePackageCard extends StatelessWidget {
     required this.buttonLabel,
     required this.onPressed,
     required this.isBusy,
+    this.price,
     super.key,
   });
 
@@ -15,6 +16,7 @@ class PurchasePackageCard extends StatelessWidget {
   final String buttonLabel;
   final VoidCallback onPressed;
   final bool isBusy;
+  final String? price;
 
   @override
   Widget build(BuildContext context) {
@@ -74,26 +76,27 @@ class PurchasePackageCard extends StatelessWidget {
           const SizedBox(height: 18),
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF6C85F).withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: const Color(0xFFF6C85F).withValues(alpha: 0.25),
+              if (price != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF6C85F).withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFFF6C85F).withValues(alpha: 0.25),
+                    ),
+                  ),
+                  child: Text(
+                    price!,
+                    style: textTheme.labelLarge?.copyWith(
+                      color: const Color(0xFFF6C85F),
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
-                child: Text(
-                  'Yakında',
-                  style: textTheme.labelLarge?.copyWith(
-                    color: const Color(0xFFF6C85F),
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
               const Spacer(),
               FilledButton(
                 onPressed: isBusy ? null : onPressed,

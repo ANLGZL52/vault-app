@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/services/subscription_service.dart';
 import '../../purchase/services/credit_service.dart';
 import '../data/vault_topics.dart';
 import '../services/vault_service.dart';
@@ -44,10 +45,13 @@ class _VaultsScreenState extends State<VaultsScreen> {
         CreditService().hasAllVaults(),
       ]);
 
+      final status = SubscriptionService.instance.status;
+
       return _VaultsAccessSnapshot(
         openedVaultIds: results[0] as Set<int>,
         vaultCredits: results[1] as int,
-        hasAllVaults: results[2] as bool,
+        hasAllVaults: (results[2] as bool) || status.hasUnlimitedVaults,
+        purchasedVaultAllowance: status.purchasedVaultAllowance,
       );
     } catch (error, stackTrace) {
       debugPrint('Vaults access snapshot failed: $error');
@@ -143,12 +147,16 @@ class _VaultsScreenState extends State<VaultsScreen> {
                                     isOpened: isOpened,
                                     vaultCredits: access.vaultCredits,
                                     hasAllVaults: access.hasAllVaults,
+                                    purchasedVaultAllowance:
+                                        access.purchasedVaultAllowance,
                                   );
                                   final statusLabel = getVaultStatusLabel(
                                     vaultId: entry.key,
                                     isOpened: isOpened,
                                     vaultCredits: access.vaultCredits,
                                     hasAllVaults: access.hasAllVaults,
+                                    purchasedVaultAllowance:
+                                        access.purchasedVaultAllowance,
                                   );
 
                                   return SizedBox(
@@ -190,16 +198,19 @@ class _VaultsAccessSnapshot {
     required this.openedVaultIds,
     required this.vaultCredits,
     required this.hasAllVaults,
+    this.purchasedVaultAllowance = 0,
   });
 
   const _VaultsAccessSnapshot.empty()
     : openedVaultIds = const {},
       vaultCredits = 0,
-      hasAllVaults = false;
+      hasAllVaults = false,
+      purchasedVaultAllowance = 0;
 
   final Set<int> openedVaultIds;
   final int vaultCredits;
   final bool hasAllVaults;
+  final int purchasedVaultAllowance;
 }
 
 String getVaultStatusLabel({
@@ -207,11 +218,13 @@ String getVaultStatusLabel({
   required bool isOpened,
   required int vaultCredits,
   required bool hasAllVaults,
+  int purchasedVaultAllowance = 0,
 }) {
   if (isOpened) return 'Açıldı';
   if (vaultId <= freeVaultLimit) return 'Açılabilir';
   if (hasAllVaults) return 'Açılabilir';
   if (vaultCredits > 0) return 'Açılabilir';
+  if (purchasedVaultAllowance > 0) return 'Açılabilir';
   return 'Kilitli';
 }
 
@@ -220,11 +233,13 @@ bool isVaultLocked({
   required bool isOpened,
   required int vaultCredits,
   required bool hasAllVaults,
+  int purchasedVaultAllowance = 0,
 }) {
   if (isOpened) return false;
   if (vaultId <= freeVaultLimit) return false;
   if (hasAllVaults) return false;
   if (vaultCredits > 0) return false;
+  if (purchasedVaultAllowance > 0) return false;
   return true;
 }
 
@@ -290,12 +305,11 @@ class _VaultsDescription extends StatelessWidget {
         style: style,
         children: const [
           TextSpan(text: 'İlk 3 kasa ücretsiz. Diğer kasalar\n'),
-          TextSpan(text: 'yakında '),
           TextSpan(
-            text: 'paketlerle',
+            text: 'paket satın alarak',
             style: TextStyle(color: _gold),
           ),
-          TextSpan(text: ' açılacak.'),
+          TextSpan(text: ' açılabilir.'),
         ],
       ),
     );

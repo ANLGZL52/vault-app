@@ -333,6 +333,21 @@ class RevenueCatService {
     }
   }
 
+  Future<Map<String, String>> getProductPriceMap() async {
+    if (!_isConfigured || !isPlatformSupported) return {};
+    try {
+      final offerings = await Purchases.getOfferings();
+      final current = offerings.current;
+      if (current == null) return {};
+      return {
+        for (final pkg in current.availablePackages)
+          pkg.storeProduct.identifier: pkg.storeProduct.priceString,
+      };
+    } catch (_) {
+      return {};
+    }
+  }
+
   Future<void> restorePurchases() async {
     if (!_isConfigured) {
       throw const RevenueCatServiceException('RevenueCat henüz başlatılmadı.');
