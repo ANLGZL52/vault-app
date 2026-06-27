@@ -19,7 +19,17 @@ class RevenueCatService {
 
   static final RevenueCatService instance = RevenueCatService._();
 
-  static const apiKey = 'appl_qwHQgRIVLDyAMEecmiWkNCyljPY';
+  static const appleApiKey = 'appl_qwHQgRIVLDyAMEecmiWkNCyljPY';
+  static const googleApiKey = 'goog_aAfFkNqSDLbNPdnrgYElxScyaSG';
+
+  /// Platform-specific RevenueCat public SDK key.
+  static String get apiKey {
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      return googleApiKey;
+    }
+    return appleApiKey;
+  }
+
   static const entitlementId = 'Vault Pro';
   static const offeringIdentifier = 'default';
   static const productAllVaults = 'all_vaults';
