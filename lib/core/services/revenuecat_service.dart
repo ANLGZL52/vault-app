@@ -19,7 +19,7 @@ class RevenueCatService {
 
   static final RevenueCatService instance = RevenueCatService._();
 
-  static const apiKey = 'test_YbkNpYWGSqNuxoAPrEKHXoNVeDl';
+  static const apiKey = 'appl_qwHQgRIVLDyAMEecmiWkNCyljPY';
   static const entitlementId = 'Vault Pro';
   static const offeringIdentifier = 'default';
   static const productAllVaults = 'all_vaults';
