@@ -8,6 +8,7 @@ workflows:
       flutter: 3.44.2
       groups:
         - google_play_credentials
+        - openrouter_credentials
       vars:
         PACKAGE_NAME: com.anilguzel.vault
 
@@ -35,7 +36,8 @@ workflows:
         script: |
           flutter build appbundle \
             --release \
-            --build-number=$BUILD_NUMBER
+            --build-number=$BUILD_NUMBER \
+            --dart-define=OPENROUTER_API_KEY=$OPENROUTER_API_KEY
 
     artifacts:
       - build/**/outputs/bundle/**/*.aab
@@ -60,6 +62,7 @@ workflows:
       cocoapods: default
       groups:
         - appstore_credentials
+        - openrouter_credentials
       vars:
         BUNDLE_ID: com.anilguzel.vault
         XCODE_WORKSPACE: ios/Runner.xcworkspace
@@ -116,7 +119,8 @@ workflows:
           flutter build ios \
             --release \
             --no-codesign \
-            --build-number $BUILD_NUMBER
+            --build-number $BUILD_NUMBER \
+            --dart-define=OPENROUTER_API_KEY=$OPENROUTER_API_KEY
 
       - name: Set up code signing
         script: xcode-project use-profiles
